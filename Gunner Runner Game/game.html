@@ -1,0 +1,497 @@
+<html>
+	<head>
+		<link rel="preconnect" href="https://fonts.googleapis.com">
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+		<link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
+		<style>
+			*{
+				font-family: 'VT323', monospace;
+			}
+			canvas{
+				width: 900px;
+				height: 900px;
+				background-color: gray;
+				position: absolute;
+				left: 50%; 
+				top: 50%;
+				transform: translate(-50%, -50%);
+			}
+			.hide{
+				display: none;
+			}
+			body{
+				background-color: black;
+			}
+		</style>
+		<title>Block & Shoot</title>
+	</head>
+	<body>
+		<canvas id="canvas"></canvas>
+		<img src="img/soldier.png" class="hide" id="soldier">
+		<img src="img/nightsky.png" class="hide" id="background">
+		<img src="img/nightskyflip.png" class="hide" id="backgroundf">
+		<img src="img/ammo.png" class="hide" id="ammobox">
+		<img src="img/redblock.png" class="hide" id="rock"> 
+		<img src="img/medkit.png" class="hide" id="medkit">
+		
+		<img src="img/Rocks/rock1.png" class="hide" id="crack1">
+		<img src="img/Rocks/rock2.png" class="hide" id="crack2">
+		<img src="img/Rocks/rock3.png" class="hide" id="crack3">
+		<img src="img/Rocks/rock4.png" class="hide" id="crack4">
+		<img src="img/Rocks/rock5.png" class="hide" id="crack5">
+		<img src="img/logo.png" class="hide" id="logo">
+		<script>
+			var canvas = document.getElementById("canvas");
+			var ctx = canvas.getContext("2d");
+			
+			let rect = canvas.getBoundingClientRect();
+			canvas.width = rect.width * devicePixelRatio;
+			canvas.height = rect.height * devicePixelRatio;
+			ctx.scale(devicePixelRatio, devicePixelRatio);
+			canvas.style.width = rect.width + 'px';
+			canvas.style.height = rect.height + 'px';
+			
+			var soldierimg = document.getElementById("soldier");
+			var sky = document.getElementById("background");
+			var skyf = document.getElementById("backgroundf");
+			var ammobox = document.getElementById("ammobox");
+			var rockImg = document.getElementById("rock");
+			var medkitImg = document.getElementById("medkit");
+			var crack1 = document.getElementById("crack1");
+			var crack2 = document.getElementById("crack2");
+			var crack3 = document.getElementById("crack3");
+			var crack4 = document.getElementById("crack4");
+			var crack5 = document.getElementById("crack5");
+			var logo = document.getElementById("logo");
+			
+			var groundX1 = 0;
+			var groundY1 = 0;
+			var groundX2 = 900;
+			var groundY2 = 0;
+			var movementSpeed = 2;
+			var skyX1 = 0;
+			var skyX2 = 900;
+			var grounded = true;
+			var randomAmmo = 0;
+			var randomKit = 0;
+			var rockLevels = 0;
+			var ranInc = 0;
+			var moveAmmo = false;
+			var moveKit = false;
+			var score = 0;
+			var scoreList = [];
+			
+			var character = {
+				x: 100,
+				y: 670, 
+//				-10 from bottom for y
+				width: 140,
+				height: 140,
+				ammo: 20,
+				clip: 40,
+				gravity: 2,
+				health: 100
+			}
+			var bulletList = [];
+			var bullet = {
+				x: 170,
+				y: character.y + 45,
+				width: 10,
+				height: 5,
+				color: "yellow"
+			}
+			var rockList = [];
+			var rock = {
+				x: 900,
+				y: 730,
+				width: 70,
+				height: 70,
+				hit: 0
+			}
+			var ammoBox = {
+				x: 900,
+				y: 720,
+				width: 50,
+				height: 50
+			}
+			var medkit = {
+				x: 900,
+				y: 720,
+				width: 50,
+				height: 50
+			}
+			
+			function drawCharacter(){
+				ctx.drawImage(soldierimg, character.x, character.y, character.width, character.height);
+				character.y += character.gravity;
+				if(character.y + character.height >= 800){
+					character.y = 800 - character.height;
+					grounded = true;
+				}
+			}
+			function drawRocks(){
+				ctx.fillRect(10 + groundX1,810 + groundY1, 30, 10);
+				ctx.fillRect(70 + groundX1,840 + groundY1, 30, 10);
+				ctx.fillRect(100 + groundX1,870 + groundY1, 30, 10);
+				ctx.fillRect(150 + groundX1,830 + groundY1, 30, 10);
+				
+				ctx.fillRect(230 + groundX1,810 + groundY1, 30, 10);
+				ctx.fillRect(290 + groundX1,840 + groundY1, 30, 10);
+				ctx.fillRect(320 + groundX1,870 + groundY1, 30, 10);
+				ctx.fillRect(370 + groundX1,830 + groundY1, 30, 10);
+				
+				ctx.fillRect(450 + groundX1,810 + groundY1, 30, 10);
+				ctx.fillRect(510 + groundX1,840 + groundY1, 30, 10);
+				ctx.fillRect(540 + groundX1,870 + groundY1, 30, 10);
+				ctx.fillRect(590 + groundX1,830 + groundY1, 30, 10);
+				
+				ctx.fillRect(670 + groundX1,810 + groundY1, 30, 10);
+				ctx.fillRect(730 + groundX1,840 + groundY1, 30, 10);
+				ctx.fillRect(760 + groundX1,870 + groundY1, 30, 10);
+				ctx.fillRect(810 + groundX1,830 + groundY1, 30, 10);
+
+				ctx.fillRect(10 + groundX2,810 + groundY2, 30, 10);
+				ctx.fillRect(70 + groundX2,840 + groundY2, 30, 10);
+				ctx.fillRect(100 + groundX2,870 + groundY2, 30, 10);
+				ctx.fillRect(150 + groundX2,830 + groundY2, 30, 10);
+				
+				ctx.fillRect(230 + groundX2,810 + groundY2, 30, 10);
+				ctx.fillRect(290 + groundX2,840 + groundY2, 30, 10);
+				ctx.fillRect(320 + groundX2,870 + groundY2, 30, 10);
+				ctx.fillRect(370 + groundX2,830 + groundY2, 30, 10);
+				
+				ctx.fillRect(450 + groundX2,810 + groundY2, 30, 10);
+				ctx.fillRect(510 + groundX2,840 + groundY2, 30, 10);
+				ctx.fillRect(540 + groundX2,870 + groundY2, 30, 10);
+				ctx.fillRect(590 + groundX2,830 + groundY2, 30, 10);
+				
+				ctx.fillRect(670 + groundX2,810 + groundY2, 30, 10);
+				ctx.fillRect(730 + groundX2,840 + groundY2, 30, 10);
+				ctx.fillRect(760 + groundX2,870 + groundY2, 30, 10);
+				ctx.fillRect(810 + groundX2,830 + groundY2, 30, 10);
+			}
+			function background(){	
+				ctx.fillStyle = "#462d25";
+				ctx.fillRect(0 + groundX1,800 + groundY1,900,100);
+				ctx.fillRect(0 + groundX2,800 + groundY2,900,100);
+				
+				ctx.fillStyle = "#170f0c";
+				drawRocks();
+				
+				groundX1 -= movementSpeed;
+				groundX2 -= movementSpeed;
+				if(groundX1 <= -900){
+					groundX1 = 900;
+				}
+				if(groundX2 <= -900){
+					groundX2 = 900;
+				}
+				
+				skyX1 -= movementSpeed/5;
+				skyX2 -= movementSpeed/5;
+				if(skyX1 <= -900){
+					skyX1 = 900;
+				}
+				if(skyX2 <= -900){
+					skyX2 = 900;
+				}
+				
+				ctx.fillStyle = "black";
+				ctx.fillRect(0,800,900,4);
+			}
+			var picColor = "black";
+			var picMes = "";
+			function UI(){
+				ctx.font='50px VT323';
+				ctx.fillStyle = "yellow";
+				ctx.fillText('Ammo: ' + character.ammo + "/" + character.clip,20,50);
+				ctx.fillText(character.health,75,90);
+				ctx.fillStyle = "skyblue";
+				ctx.fillText('Score: ' + score,20,160);
+				
+				ctx.textAlign = "left";
+				ctx.fillStyle = "black";
+				ctx.fillRect(20, 60, 210, 60);
+				ctx.fillStyle = "#bc544b";
+				ctx.fillRect(25, 65, character.health * 2, 50);
+				ctx.fillStyle = "#900603";
+				ctx.fillRect(50,70,5,40);
+				ctx.fillRect(32,87,40, 5);
+				ctx.fillText(character.health,80,105);
+				
+				ctx.fillStyle = picColor;
+				ctx.textAlign = "center";
+				ctx.fillText(picMes, 450, 600);
+				ctx.textAlign = "left";
+			}
+			function pickups(){
+				randomAmmo = Math.floor(Math.random() * 700);
+				if(randomAmmo == 1){
+					moveAmmo = true;
+				}
+				if(moveAmmo == true){
+					ammoBox.x -= movementSpeed;
+					if(ammoBox.x <= -100){
+						ammoBox.x = 900;
+						moveAmmo = false;
+					}
+				}
+				ctx.drawImage(ammobox, ammoBox.x, ammoBox.y, ammoBox.width, ammoBox.height);
+				if(ammoBox.x < character.x + 30 && ammoBox.x + ammoBox.width > character.x && ammoBox.y < character.y + character.height && ammoBox.y > character.y){
+					moveAmmo = false;
+					ammoBox.x = 900;
+					if(20 - character.ammo < 10){
+						var left = 20 - character.ammo;
+						character.clip += 10 - left;
+						character.ammo += left;
+					}
+					if(20 - character.ammo >= 10){
+						character.ammo += 10;
+					}
+					picColor = "yellow";
+					picMes = "+10 Ammo";
+					setTimeout(function (){
+						picColor = "black";
+						picMes = '';
+					}, 1500);
+				}
+				
+				randomKit = Math.floor(Math.random() * 700);
+				if(randomKit == 1){
+					moveKit = true;
+				}
+				if(moveKit == true){
+					medkit.x -= movementSpeed;
+					if(medkit.x <= -100){
+						medkit.x = 900;
+						moveKit = false;
+					}
+				}
+				ctx.drawImage(medkitImg, medkit.x, medkit.y, medkit.width, medkit.height);
+				if(medkit.x < character.x + 30 && medkit.x + medkit.width > character.x && medkit.y < character.y + character.height && medkit.y > character.y){
+					moveKit = false;
+					medkit.x = 900;
+					if(character.health <= 80){
+						character.health += 20;
+					}
+					if(character.health > 80){
+						character.health = 100;
+					}
+					picColor = "#900603";
+					picMes = "+20 Health";
+					setTimeout(function (){
+						picColor = "black";
+						picMes = '';
+					}, 1500);
+				}
+			}
+			function enemyRock(){
+				if(rock.hit == 0){
+					ctx.drawImage(rockImg, rock.x, 800 - rock.height, rock.width, rock.height);
+				}
+				if(rock.hit == 1){
+					ctx.drawImage(crack1, rock.x, 800 - rock.height, rock.width, rock.height);
+				}
+				if(rock.hit == 2){
+					ctx.drawImage(crack2, rock.x, 800 - rock.height, rock.width, rock.height);
+				}
+				if(rock.hit == 3){
+					ctx.drawImage(crack3, rock.x, 800 - rock.height, rock.width, rock.height);
+				}
+				if(rock.hit == 4){
+					ctx.drawImage(crack4, rock.x, 800 - rock.height, rock.width, rock.height);
+				}
+				if(rock.hit == 5){
+					ctx.drawImage(crack5, rock.x, 800 - rock.height, rock.width, rock.height);
+				}
+				rock.y = 800 - rock.height;
+				rock.x -= movementSpeed;
+				if(rock.x + rock.width < 0){
+					rock.x = 900;
+					rock.hit = 0;
+			 		rock.height = Math.floor(Math.random() * 50) + 70;
+				}
+				if(rock.x < character.x + 30 && rock.x + rock.width > character.x && rock.y + rock.height > character.y && rock.y < character.y + character.height){
+					rock.x = 900;
+					character.health -= Math.floor(Math.random() * 10) + 10;
+					rock.height = Math.floor(Math.random() * 50) + 70;
+				}
+				if(rock.hit > 5){
+					rock.x = 900;
+					rock.hit = 0;
+					rock.height = Math.floor(Math.random() * 50) + 70;
+					ranInc = Math.floor(Math.random() * 500) + 500;
+					picColor = "skyblue";
+					picMes = "+" + ranInc + " Score";
+					score += ranInc;
+					setTimeout(function (){
+						picColor = "black";
+						picMes = '';
+					}, 1500);
+				}
+			}
+			function overlaps(ax, ay, widtha, heighta, bx, by, widthb, heightb) {
+				ax1 = ax;
+				ay1 = ay;
+				ax2 = ax + widtha;
+				ay2 = ay + heighta;
+				
+				bx1 = bx;
+				by1 = by;
+				bx2 = bx + widthb;
+				by2 = by + heightb;
+				
+				if (ax1 >= bx2 || bx1 >= ax2) return false;
+
+				// no vertical overlap
+				if (ay1 >= by2 || by1 >= ay2) return false;
+
+				return true;
+			}
+			
+//			animation loop
+			window.requestAnimationFrame(gameLoop);
+			var num;
+			var play = false;
+			var hscore = 0;
+			var glist = 0;
+			function gameLoop() {
+				if(play == true){
+					ctx.drawImage(sky, skyX1, 0);
+					ctx.drawImage(skyf, skyX2, 0);
+					drawCharacter();
+					background();
+					UI();
+					pickups();
+
+					if(character.y + character.height < 800){
+						grounded = false;
+					}
+					if(check == true){
+						if(crouched == false){
+							character.gravity = -5;
+							if(character.y <= 400){
+								character.gravity = 5;
+								check = false;
+							}	
+						}
+						if(crouched){
+							character.gravity = -7;
+							if(character.y <= 550){
+								character.gravity = 7;
+								check = false;
+							}	
+						}
+					}
+
+					var count = bulletList.length;
+					for(var i = 0; i < count; i++){
+						ctx.fillStyle = "yellow";
+						ctx.fillRect(bulletList[i][0], bulletList[i][1], bulletList[i][2], bulletList[i][3]);
+						bulletList[i][0] += 5;
+						if(overlaps(bulletList[i][0], bulletList[i][1], bulletList[i][2], bulletList[i][3], rock.x, rock.y, rock.width, 100 )){
+							rock.hit += 1;
+							bulletList[i][0] = 3000;
+						}
+						if(bulletList[i][0] >= 900){
+							bulletList.splice(i,0);
+						}
+					}
+
+					enemyRock();
+					movementSpeed += 0.0001;
+					if(character.health <= 0){
+						hscore = score;
+						play = false;
+					}
+
+					score += Math.round((1 * movementSpeed));	
+				}
+				if(play == false){
+					score = 0;
+					character.ammo = 20;
+					character.clip = 40;
+					character.health = 100;
+					rock.x = 900;
+					rock.hit = 0;
+					bulletList = [];
+					
+					scoreList.push(hscore)
+					for(let l = 0; l < scoreList.length; l++){
+						if(scoreList[l] > glist){
+							glist = scoreList[l]
+						}
+					}
+					
+					ctx.drawImage(sky, 0, 0);
+					ctx.drawImage(logo, -5, 0);
+					ctx.font='50px VT323';
+					ctx.fillStyle = "yellow";
+					ctx.textAlign = "center";
+					ctx.fillText('Prev Score: ' + hscore, 450, 370);
+					ctx.fillText('High Score: ' + glist, 450, 420);
+					
+					ctx.font='75px VT323';
+					ctx.fillText("Press SPACE to start", 450, 850);
+					
+				}
+				
+				window.requestAnimationFrame(gameLoop);
+			}
+			
+			var check = false;
+			var crouched = false;
+			document.addEventListener('keydown', function(event){
+                var charCode = event.keyCode;
+				if(play == true){
+					if(charCode == 87 && grounded == true){
+						check = true;
+					}
+					if(charCode == 32 && character.ammo > 0){
+						character.ammo -= 1;
+						if(character.ammo == 0 && character.clip > 0){
+							for (let b = 0; b < 20; b++){
+								character.ammo += 1;
+								character.clip -= 1;	
+								if(character.ammo == 20){
+									break;
+								}
+								if(character.clip == 0){
+									break;
+								}
+							}
+						}
+						if(crouched == false){
+							bulletList.push([bullet.x, character.y + 45, bullet.width, bullet.height, bullet.color]);	
+						}
+						if(crouched){
+							bulletList.push([bullet.x, character.y + 20, bullet.width, bullet.height, bullet.color]);	
+						}
+					}
+					if(charCode == 16){
+						crouched = true;
+						character.height = 70;
+						character.y += 100;
+	//					bullet.y -= 20;
+					}	
+				}
+				if(play == false){
+					if(charCode == 32){
+						play = true;
+					}
+				}
+            });
+			document.addEventListener('keyup', function(event){
+                var charCode = event.keyCode;
+				if(play == true){
+					if(charCode == 16){
+						crouched = false;
+						character.y -= 70;
+						character.height = 140;
+					}	
+				}
+            });
+		</script>
+	
+	</body>
+</html>
